@@ -13,19 +13,17 @@
   <meta property="og:image" content="https://ruizenie.com/assets/locker-open.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='10' y='4' width='44' height='56' rx='6' fill='%23cfe1f2' stroke='%23141414' stroke-width='3'/%3E%3Cg stroke='%23141414' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M20 14h24M20 20h24M20 26h24'/%3E%3C/g%3E%3Crect x='40' y='34' width='5' height='12' rx='2' fill='%232f5bff'/%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Ultra&family=Space+Mono:wght@400;700&family=Noto+Serif:wght@500;900&family=Noto+Sans:wght@400;500;700&family=Instrument+Serif:ital@0;1&family=Oswald:wght@700&family=Permanent+Marker&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/fonts/fonts.css">
   <link rel="stylesheet" href="styles.css">
   <script type="importmap">
     {
       "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        "three": "./vendor/three/three.module.js",
+        "three/addons/": "./vendor/three/addons/"
       }
     }
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="vendor/gsap.min.js"></script>
 </head>
 <body>
   <canvas id="scene"></canvas>
