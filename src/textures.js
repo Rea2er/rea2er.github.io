@@ -676,22 +676,32 @@ export function skillCardBackTexture(s) {
     ctx.font = `900 64px ${FONTS.serif}`;
     ctx.fillText(s.title, 58, 176);
     const dark = s.ink === '#ffffff';
-    let x = 60, y = 224;
-    ctx.font = `600 38px ${FONTS.sans}`;
-    s.stack.forEach((t, i) => {
+    // lay the chips out at full size, shrinking them together until the last row clears the legend
+    const place = (k) => {
+      ctx.font = `600 ${38 * k}px ${FONTS.sans}`;
+      let x = 60, y = 224;
+      const out = s.stack.map((t) => {
+        const cw = ctx.measureText(t).width + 52 * k;
+        if (x + cw > w - 60) { x = 60; y += 88 * k; }
+        const at = { t, x, y, cw };
+        x += cw + 16 * k;
+        return at;
+      });
+      return { out, bottom: y + 70 * k };
+    };
+    let k = 1, lay = place(k);
+    while (lay.bottom > 528 && k > 0.6) lay = place((k -= 0.04));
+    lay.out.forEach(({ t, x, y, cw }, i) => {
       const core = i < (s.core ?? 0);
-      const cw = ctx.measureText(t).width + 52;
-      if (x + cw > w - 60) { x = 60; y += 88; }
       ctx.beginPath();
-      ctx.roundRect(x, y, cw, 70, 35);
+      ctx.roundRect(x, y, cw, 70 * k, 35 * k);
       ctx.fillStyle = core ? s.ink : dark ? 'rgba(255,255,255,0.16)' : '#ffffff';
       ctx.fill();
       ctx.lineWidth = 3;
       ctx.strokeStyle = dark ? 'rgba(255,255,255,0.7)' : '#141414';
       ctx.stroke();
       ctx.fillStyle = core ? s.color : s.ink;
-      ctx.fillText(t, x + 26, y + 48);
-      x += cw + 16;
+      ctx.fillText(t, x + 26 * k, y + 48 * k);
     });
     // legend
     ctx.fillStyle = s.ink;
