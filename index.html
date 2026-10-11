@@ -1,98 +1,82 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-  -->
-  <base href="/">
-
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="portfolio">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <title>portfolio</title>
-  <link rel="manifest" href="manifest.json">
-</head>
-<body>
-  <!-- This script installs service_worker.js to provide PWA functionality to
-       application. For more information, see:
-       https://developers.google.com/web/fundamentals/primers/service-workers -->
-  <script>
-    var serviceWorkerVersion = '1930817915';
-    var scriptLoaded = false;
-    function loadMainDartJs() {
-      if (scriptLoaded) {
-        return;
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ruize Nie Portfolio</title>
+  <meta name="description" content="Ruize Nie, Senior iOS Engineer at IBM Canada. An interactive 3D locker portfolio: experience, skills, selected work and teaching.">
+  <meta name="theme-color" content="#f1f3f7">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ruizenie.com/">
+  <meta property="og:title" content="Ruize Nie Portfolio">
+  <meta property="og:description" content="Senior iOS Engineer at IBM Canada. Open the locker to see experience, skills and selected work.">
+  <meta property="og:image" content="https://ruizenie.com/assets/locker-open.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='10' y='4' width='44' height='56' rx='6' fill='%23cfe1f2' stroke='%23141414' stroke-width='3'/%3E%3Cg stroke='%23141414' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M20 14h24M20 20h24M20 26h24'/%3E%3C/g%3E%3Crect x='40' y='34' width='5' height='12' rx='2' fill='%232f5bff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ultra&family=Space+Mono:wght@400;700&family=Noto+Serif:wght@500;900&family=Noto+Sans:wght@400;500;700&family=Instrument+Serif:ital@0;1&family=Oswald:wght@700&family=Permanent+Marker&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
       }
-      scriptLoaded = true;
-      var scriptTag = document.createElement('script');
-      scriptTag.src = 'main.dart.js';
-      scriptTag.type = 'application/javascript';
-      document.body.append(scriptTag);
-    }
-
-    if ('serviceWorker' in navigator) {
-      // Service workers are supported. Use them.
-      window.addEventListener('load', function () {
-        // Wait for registration to finish before dropping the <script> tag.
-        // Otherwise, the browser will load the script multiple times,
-        // potentially different versions.
-        var serviceWorkerUrl = 'flutter_service_worker.js?v=' + serviceWorkerVersion;
-        navigator.serviceWorker.register(serviceWorkerUrl)
-          .then((reg) => {
-            function waitForActivation(serviceWorker) {
-              serviceWorker.addEventListener('statechange', () => {
-                if (serviceWorker.state == 'activated') {
-                  console.log('Installed new service worker.');
-                  loadMainDartJs();
-                }
-              });
-            }
-            if (!reg.active && (reg.installing || reg.waiting)) {
-              // No active web worker and we have installed or are installing
-              // one for the first time. Simply wait for it to activate.
-              waitForActivation(reg.installing ?? reg.waiting);
-            } else if (!reg.active.scriptURL.endsWith(serviceWorkerVersion)) {
-              // When the app updates the serviceWorkerVersion changes, so we
-              // need to ask the service worker to update.
-              console.log('New service worker available.');
-              reg.update();
-              waitForActivation(reg.installing);
-            } else {
-              // Existing service worker is still good.
-              console.log('Loading app from service worker.');
-              loadMainDartJs();
-            }
-          });
-
-        // If service worker doesn't succeed in a reasonable amount of time,
-        // fallback to plaint <script> tag.
-        setTimeout(() => {
-          if (!scriptLoaded) {
-            console.warn(
-              'Failed to load app from service worker. Falling back to plain <script> tag.',
-            );
-            loadMainDartJs();
-          }
-        }, 4000);
-      });
-    } else {
-      // Service workers not supported. Just drop the <script> tag.
-      loadMainDartJs();
     }
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <header class="nav">
+    <button class="brand" data-action="home">RUIZE NIE<span>PERSONAL PORTFOLIO ’26</span></button>
+    <nav>
+      <button data-go="about">ABOUT</button>
+      <button data-go="experience">EXPERIENCE</button>
+      <button data-go="skills">SKILLS</button>
+      <button data-go="work">SELECTED WORK</button>
+      <button data-go="contact">CONTACT</button>
+    </nav>
+  </header>
+
+  <div class="hint" id="hint"><i></i><span>CLICK ME</span></div>
+  <div class="tip" id="tip"></div>
+
+  <button class="bare-close" aria-label="Close">×</button>
+
+  <div class="note-bar" id="note-bar">
+    <textarea id="note-input" maxlength="400" aria-label="Your note" autocomplete="off" spellcheck="false"></textarea>
+    <span class="nb-hint">TYPE ON THE PAPER</span>
+    <button data-note="send">COPY &amp; MESSAGE ON LINKEDIN ↗</button>
+  </div>
+
+  <div class="pager" id="pager">
+    <button data-sp="prev" aria-label="Previous">←</button>
+    <span class="sp-dots"></span>
+    <span class="sp-count">01 / 01</span>
+    <button data-sp="next" aria-label="Next">→</button>
+  </div>
+
+  <aside class="panel" id="panel">
+    <button class="close" aria-label="Close">×</button>
+    <div class="panel-body"></div>
+  </aside>
+
+  <section class="workpage" id="workpage" aria-hidden="true">
+    <button class="wp-back">← BACK TO FOLDERS</button>
+    <div class="wp-view"></div>
+  </section>
+
+  <footer class="foot">
+    <button class="back-btn" data-action="close-locker">← CLOSE LOCKER</button>
+    <p id="status">LOADING…</p>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <div class="loader" id="loader"><span>LOADING LOCKER…</span></div>
+
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>
