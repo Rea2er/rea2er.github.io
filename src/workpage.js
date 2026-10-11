@@ -244,8 +244,8 @@ function player(view, cat, idx) {
 }
 
 /* ---------- PROJECTS: a cloud of tiles that morphs between shapes ---------- */
-// After laurent.fyi: every tile is a piece of work; together they form a slowly turning sphere,
-// heart, smiley, star or grid, framed by a thin HUD whose readouts update live.
+// Every tile is a piece of work; each filter gathers its tiles into a shape that stands for it
+// (see SHAPES), framed by a thin HUD whose readouts update live.
 const SHOTS = [['open', 'the locker, open'], ['shelf', 'experience, as books'], ['skills', 'skills, as cards'], ['work', 'work, as folders'], ['id', 'about, as an ID card']];
 // Flutter apps built on the channel: [file, name, aspect of the two-phone crop]
 const FLUTTER = [['food', 'Food Delivery', 0.906], ['task', 'Task Management', 0.924], ['elearn', 'Online Course', 0.924], ['clothes', 'Clothes Shop', 0.942],
@@ -298,44 +298,96 @@ function buildTiles(cat) {
   return tiles;
 }
 
-// Each shape returns N points roughly inside the unit cube.
+// Each shape returns N points roughly inside the unit cube (screen y points down). Apart from the
+// sphere and grid, shapes are drawn on a hidden canvas and filled with evenly spread points, so each
+// filter gathers its tiles into something that stands for it: my initials, the Flutter logo, an
+// iPhone, a locker, a wall of sticky notes.
+function maskPoints(n, w, h, draw, size = 0.95, seed = 1) {
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = ctx.strokeStyle = '#fff';
+  ctx.lineCap = ctx.lineJoin = 'round';
+  draw(ctx, w, h);
+  const d = ctx.getImageData(0, 0, w, h).data, cand = [];
+  for (let y = 0; y < h; y += 3) for (let x = 0; x < w; x += 3) if (d[(y * w + x) * 4 + 3] > 128) cand.push([x, y]);
+  // farthest-point sampling: each new point goes where the shape is emptiest
+  const r = T.rng(seed), dist = new Float32Array(cand.length).fill(Infinity), out = [];
+  let at = Math.floor(r() * cand.length);
+  for (let k = 0; k < n && cand.length; k++) {
+    const [px, py] = cand[at];
+    out.push([((px - w / 2) / (h / 2)) * size, ((py - h / 2) / (h / 2)) * size, (r() - 0.5) * 0.3]);
+    let best = 0;
+    for (let q = 0; q < cand.length; q++) {
+      const dd = (cand[q][0] - px) ** 2 + (cand[q][1] - py) ** 2;
+      if (dd < dist[q]) dist[q] = dd;
+      if (dist[q] > dist[best]) best = q;
+    }
+    at = best;
+  }
+  return out;
+}
+const FLUTTER_LOGO = [ // official geometry, 166 × 202 viewBox
+  [[37.7, 128.9], [9.8, 101], [100.4, 10.4], [155.9, 10.4]],
+  [[155.9, 93.1], [100.4, 93.1], [51.8, 141.7], [79.6, 169.6]],
+  [[79.6, 169.6], [107.4, 141.6], [155.9, 191.6], [100.4, 191.6]],
+];
 const SHAPES = {
+  rn: (n) => maskPoints(n, 640, 320, (ctx, w, h) => {
+    // a plain bold sans whose strokes are about two tiles wide, so the letters read like pixel type
+    ctx.font = `700 300px ${T.FONTS.sans}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.letterSpacing = '24px';
+    ctx.fillText('RN', w / 2, h / 2 + 8);
+  }, 0.8, 2),
+  flutter: (n) => maskPoints(n, 332, 404, (ctx) => {
+    ctx.scale(2, 2);
+    FLUTTER_LOGO.forEach((poly) => { ctx.beginPath(); poly.forEach(([x, y]) => ctx.lineTo(x, y)); ctx.closePath(); ctx.fill(); });
+  }, 0.95, 3),
+  iphone: (n) => maskPoints(n, 300, 600, (ctx) => {
+    ctx.lineWidth = 20;
+    ctx.beginPath(); ctx.roundRect(30, 20, 240, 560, 52); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(112, 52, 76, 22, 11); ctx.fill(); // Dynamic Island
+  }, 0.95, 4),
+  locker: (n) => maskPoints(n, 420, 600, (ctx) => {
+    // wider than the iPhone, with the vents and handle drawn as bold bars so they show through the tiles
+    ctx.lineWidth = 18;
+    ctx.beginPath(); ctx.roundRect(24, 20, 372, 560, 12); ctx.stroke();
+    ctx.lineWidth = 16;
+    ctx.beginPath();
+    [92, 132, 172, 428, 468, 508].forEach((y) => { ctx.moveTo(110, y); ctx.lineTo(310, y); }); // vents
+    ctx.moveTo(338, 250); ctx.lineTo(338, 350); // handle
+    ctx.stroke();
+  }, 0.95, 5),
+  board(n) { // sticky notes pinned in slightly uneven rows
+    const r = T.rng(6), cols = Math.min(4, Math.ceil(Math.sqrt(n * 1.4))), rows = Math.ceil(n / cols);
+    return Array.from({ length: n }, (_, i) => {
+      const c = i % cols, rw = Math.floor(i / cols), inRow = Math.min(cols, n - rw * cols);
+      return [(c - (inRow - 1) / 2) * 0.62 + (r() - 0.5) * 0.08, (rw - (rows - 1) / 2) * 0.5 + (r() - 0.5) * 0.08, (r() - 0.5) * 0.1];
+    });
+  },
   sphere(n) {
     return Array.from({ length: n }, (_, i) => {
       const y = 1 - (2 * (i + 0.5)) / n, rr = Math.sqrt(1 - y * y), a = i * 2.39996;
       return [Math.cos(a) * rr, y, Math.sin(a) * rr];
     });
   },
-  heart(n) {
-    const r = T.rng(3);
-    return Array.from({ length: n }, (_, i) => {
-      // golden-ratio steps spread any count evenly round the curve; small sets just trace the outline
-      const t = ((i * 0.618034) % 1) * Math.PI * 2, k = n < 40 ? 1 : Math.sqrt(0.15 + 0.85 * r());
-      const x = 16 * Math.sin(t) ** 3, y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
-      return [(x / 17) * k, (-y / 17) * k - 0.12, (r() - 0.5) * 0.5 * (1.2 - k)]; // screen y points down
-    });
-  },
-  smiley(n) {
-    const r = T.rng(5), ring = Math.round(n * 0.62), eyes = Math.round(n * 0.12);
-    return Array.from({ length: n }, (_, i) => {
-      if (i < ring) { const a = (i / ring) * Math.PI * 2; const w = 0.9 + r() * 0.12; return [Math.cos(a) * w, Math.sin(a) * w, (r() - 0.5) * 0.25]; }
-      if (i < ring + eyes) { const side = i % 2 ? 1 : -1; return [side * 0.33 + (r() - 0.5) * 0.14, -0.28 + (r() - 0.5) * 0.18, (r() - 0.5) * 0.2]; }
-      const a = Math.PI * (0.15 + 0.7 * ((i - ring - eyes) / (n - ring - eyes))); return [Math.cos(a) * 0.52, Math.sin(a) * 0.4 + 0.08, (r() - 0.5) * 0.2];
-    });
-  },
-  star(n) {
-    const r = T.rng(7);
-    return Array.from({ length: n }, (_, i) => {
-      const u = (i / n) * 10, seg = Math.floor(u), f = u - seg, k = n < 40 ? 1 : Math.sqrt(0.2 + 0.8 * r());
-      const pt = (j) => { const a = -Math.PI / 2 + (j * Math.PI) / 5, rad = j % 2 ? 0.42 : 1; return [Math.cos(a) * rad, Math.sin(a) * rad]; };
-      const [ax, ay] = pt(seg), [bx, by] = pt(seg + 1);
-      return [(ax + (bx - ax) * f) * k, (ay + (by - ay) * f) * k + 0.05, (r() - 0.5) * 0.35];
-    });
-  },
   grid(n) {
     const cols = Math.ceil(Math.sqrt(n * 1.9)), rows = Math.ceil(n / cols);
     return Array.from({ length: n }, (_, i) => [((i % cols) / (cols - 1) - 0.5) * 2.1, (Math.floor(i / cols) / Math.max(1, rows - 1) - 0.5) * 1.15, 0]);
   },
+};
+// each filter starts in the shape that stands for it; ‹ › still cycles through all of them
+const FILTER_SHAPE = { all: 'rn', flutter: 'flutter', apps: 'iphone', locker: 'locker', notes: 'board' };
+// tiles shrink in the drawn shapes so their outline reads instead of blurring into a block
+const TILE_SCALE = { rn: 0.42, flutter: 0.55, iphone: 1, locker: 0.4, board: 1, sphere: 1, grid: 1 };
+const shapeCache = new Map();
+const shapePoints = (name, n) => {
+  const key = `${name}:${n}`;
+  if (!shapeCache.has(key)) shapeCache.set(key, SHAPES[name](n));
+  return shapeCache.get(key);
 };
 const SHAPE_NAMES = Object.keys(SHAPES);
 
@@ -365,8 +417,9 @@ function orbit(view, cat, idx) {
   const hud = Object.fromEntries([...view.querySelectorAll('.ob-l')].map((el) => [el.dataset.k, el]));
   const chip = $('.ob-chip', view);
   const state = tiles.map(() => ({ cur: [0, 0, 0], from: [0, 0, 0], to: [0, 0, 0], start: 0, delay: 0, on: true, k: 0 }));
-  let shape = 0, filter = 'all', rotY = 0.6, rotX = -0.18, velY = 0.0025, zoom = 1, raf = 0, drag = null, hoverI = -1;
+  let shape = SHAPE_NAMES.indexOf(FILTER_SHAPE.all), filter = 'all', rotY = 0.6, rotX = -0.18, velY = 0.0025, zoom = 1, raf = 0, drag = null, hoverI = -1;
   const noise = 0.22, depth = 0.035;
+  let tileScale = TILE_SCALE[SHAPE_NAMES[shape]];
 
   // base (in-shape) and big (selected) sizes; the selected tile is laid out at its big size so it stays sharp
   const base = tiles.map(() => [0, 0]), big = tiles.map(() => [0, 0]);
@@ -422,7 +475,7 @@ function orbit(view, cat, idx) {
   }
   function reform(animate = true) {
     const live = state.map((s, i) => (filter === 'all' || tiles[i].group === filter ? i : -1)).filter((i) => i >= 0);
-    const pts = SHAPES[SHAPE_NAMES[shape]](live.length);
+    const pts = shapePoints(SHAPE_NAMES[shape], live.length);
     const now = performance.now();
     state.forEach((s, i) => { s.on = false; });
     live.forEach((i, k) => {
@@ -449,6 +502,7 @@ function orbit(view, cat, idx) {
       }
     }
     const R = Math.min(innerWidth, innerHeight) * 0.33 * zoom;
+    tileScale += (TILE_SCALE[SHAPE_NAMES[shape]] - tileScale) * 0.06;
     const cy = Math.cos(rotY), sy = Math.sin(rotY), cx = Math.cos(rotX), sx = Math.sin(rotX);
     const t = now / 1000;
     els.forEach((el, i) => {
@@ -463,12 +517,12 @@ function orbit(view, cat, idx) {
       [x, z] = [x * cy + z * sy, -x * sy + z * cy];
       [y, z] = [y * cx - z * sx, y * sx + z * cx];
       let px = x * R, py = y * R, pz = z * R;
-      let sc = s.k * (i === hoverI && i !== sel ? 1.35 : 1);
+      let sc = s.k * tileScale * (i === hoverI && i !== sel ? 1.35 / Math.sqrt(tileScale) : 1);
       let op = Math.min(1, 0.55 + (z + 1) * 0.35);
       if (i === sel) {
         // in front of every tile in the shape, scaled back so it reads at exactly its big size
         const f = focus.k, zc = Math.min(R * 1.35, PERSP * 0.6);
-        const from = base[i][0] / big[i][0];
+        const from = (base[i][0] / big[i][0]) * tileScale;
         px *= 1 - f; py *= 1 - f; pz += (zc - pz) * f;
         sc = from * s.k + ((PERSP - zc) / PERSP - from * s.k) * f;
         op += (1 - op) * f;
@@ -526,6 +580,7 @@ function orbit(view, cat, idx) {
     if (!b) return;
     release();
     filter = b.dataset.f;
+    shape = SHAPE_NAMES.indexOf(FILTER_SHAPE[filter]);
     view.querySelectorAll('.ob-filter button').forEach((x) => x.classList.toggle('is-on', x === b));
     reform();
   });
