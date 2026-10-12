@@ -78,7 +78,7 @@ const TOSS = [[12, 50, -9], [27, 58, 6], [42, 47, -4], [57, 59, 7], [71, 53, -6]
 
 function scatter(view, cat, idx) {
   // page 1 is the category's own items; extra pages (cat.pages) follow, switched from the pager below
-  const pages = [{ name: 'Work apps', note: cat.note, items: cat.items }, ...(cat.pages ?? [])];
+  const pages = [{ name: 'Work apps', sub: cat.sub, note: cat.note, items: cat.items }, ...(cat.pages ?? [])];
   let page = 0, items = pages[0].items;
   view.innerHTML = `
     ${head(cat, idx, 'is-right')}
@@ -109,6 +109,7 @@ function scatter(view, cat, idx) {
         <img src="${it.img}" alt="${it.title}" draggable="false"><figcaption>${it.title}</figcaption></figure>`;
     }).join('');
     $('.wp-help', view).textContent = `${pg.note} · DRAG TO REARRANGE · CLICK TO LOOK CLOSER`;
+    $('.wp-sub', view).textContent = pg.sub ?? cat.sub;
     view.querySelectorAll('.sc-pages button').forEach((b) => b.classList.toggle('is-on', +b.dataset.p === k));
     prints = [...table.querySelectorAll('.sc-print')];
     top = prints.length;

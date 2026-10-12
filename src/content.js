@@ -80,6 +80,7 @@ export const workCategories = [
     // page 2 of the scatter table: my own app, real screens from my iPhone
     pages: [{
       name: 'DailyTails',
+      sub: 'My own iOS app',
       note: 'DailyTails, my own iOS pet journal. Real screens from my iPhone.',
       dense: true,
       items: [
