@@ -106,7 +106,7 @@ function scatter(view, cat, idx) {
     table.innerHTML = items.map((it, i) => {
       const [x, y, r] = spot(i, items.length, pg.dense);
       return `<figure class="sc-print" data-i="${i}" style="left:${x}%;top:${y}%;--r:${r}deg;z-index:${i + 1}">
-        <img src="${it.img}" alt="${it.title}" draggable="false"><figcaption>${it.title}</figcaption></figure>`;
+        <img src="${it.img}" alt="${it.title}" draggable="false"></figure>`;
     }).join('');
     $('.wp-help', view).textContent = `${pg.note} · DRAG TO REARRANGE · CLICK TO LOOK CLOSER`;
     $('.wp-sub', view).textContent = pg.sub ?? cat.sub;
