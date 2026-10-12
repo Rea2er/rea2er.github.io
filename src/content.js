@@ -77,6 +77,28 @@ export const workCategories = [
     id: 'apps', en: 'APPS', sub: 'Shipped iOS · used by millions', short: 'APPS', color: '#d4ff3a', ink: '#2840e8',
     layout: 'scatter',
     note: 'Public App Store screens of apps I built features for.',
+    // page 2 of the scatter table: my own app, real screens from my iPhone
+    pages: [{
+      name: 'DailyTails',
+      note: 'DailyTails, my own iOS pet journal. Real screens from my iPhone.',
+      dense: true,
+      items: [
+        ['Mood Calendar', 'A month of moods at a glance'],
+        ['Journal List', 'Every day with its records and notes'],
+        ['Daily Check-in', 'One tap to log how the day went'],
+        ['Perfect Month', 'A monthly streak badge'],
+        ['Daily Draw', 'A small idea card for each day'],
+        ['Explore', 'Guides, places and products'],
+        ['Beginner Guide', 'Tips for the first days together'],
+        ['Play Together', 'Quick play ideas by energy level'],
+        ['Monthly Stats', 'Mood, food and water trends'],
+        ['Year in Review', 'Mood heatmap and yearly charts'],
+        ['AI Pet Chat', 'Care questions, answered by Google Gemini'],
+        ['Emergency Detection', 'Urgent questions get a vet warning first'],
+        ['Premium', 'Subscription paywall'],
+        ['Profile', 'Pets, themes and records'],
+      ].map(([title, sub], k) => ({ img: `assets/dailytails-${String(k + 1).padStart(2, '0')}.jpg`, title, sub: `DailyTails · ${sub}` })),
+    }],
     items: [
       { img: 'assets/aircanada-app-8.jpg', title: 'Travel Timeline', sub: 'Air Canada · the Day-of-Travel journey I owned' },
       { img: 'assets/aircanada-app-5.jpg', title: 'Mobile Boarding Pass', sub: 'Air Canada · PassKit & Apple Wallet' },

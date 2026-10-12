@@ -60,6 +60,7 @@ function preloadImages() {
     ...FLUTTER.map(([f]) => `assets/flutter-${f}.jpg`),
     ...Array.from({ length: 8 }, (_, k) => `assets/aircanada-app-${k + 1}.jpg`),
     ...Array.from({ length: 6 }, (_, k) => `assets/pnc-app-${k + 1}.jpg`),
+    ...Array.from({ length: 14 }, (_, k) => `assets/dailytails-${pad(k + 1)}.jpg`),
   ];
   urls.forEach((u) => { const img = new Image(); img.decoding = 'async'; img.src = u; img.decode?.().catch(() => {}); });
 }
@@ -76,26 +77,50 @@ const head = (cat, idx, cls = '') => `
 const TOSS = [[12, 50, -9], [27, 58, 6], [42, 47, -4], [57, 59, 7], [71, 53, -6], [85, 62, 5], [34, 74, -5], [64, 76, 8]];
 
 function scatter(view, cat, idx) {
+  // page 1 is the category's own items; extra pages (cat.pages) follow, switched from the pager below
+  const pages = [{ name: 'Work apps', note: cat.note, items: cat.items }, ...(cat.pages ?? [])];
+  let page = 0, items = pages[0].items;
   view.innerHTML = `
     ${head(cat, idx, 'is-right')}
-    <div class="sc-table">
-      ${cat.items.map((it, i) => {
-        const [x, y, r] = TOSS[i % TOSS.length];
-        return `<figure class="sc-print" data-i="${i}" style="left:${x}%;top:${y}%;--r:${r}deg;z-index:${i + 1}">
-          <img src="${it.img}" alt="${it.title}" draggable="false"><figcaption>${it.title}</figcaption></figure>`;
-      }).join('')}
-    </div>
-    <p class="wp-help">${cat.note} · DRAG TO REARRANGE · CLICK TO LOOK CLOSER</p>
+    <div class="sc-table"></div>
+    <p class="wp-help"></p>
+    ${pages.length > 1 ? `<nav class="sc-pages">${pages.map((p, k) => `<button data-p="${k}">${pad(k + 1)} ${p.name}</button>`).join('')}</nav>` : ''}
     <div class="sc-light" hidden>
       <button class="sc-nav" data-d="-1" aria-label="Previous">←</button>
       <figure><img alt=""><figcaption><b></b><span></span></figcaption></figure>
       <button class="sc-nav" data-d="1" aria-label="Next">→</button>
     </div>`;
   const table = $('.sc-table', view);
-  const prints = [...view.querySelectorAll('.sc-print')];
-  let top = prints.length;
-  gsap.from(prints, { y: () => innerHeight * 0.7, rotation: () => gsap.utils.random(-40, 40), opacity: 0, duration: 0.9, ease: 'power3.out', stagger: 0.07, delay: 0.15, clearProps: 'transform,opacity' });
+  let prints = [], top = 0;
+  // two loose rows for the dense page, the hand-placed toss otherwise
+  const spot = (i, n, dense) => {
+    if (!dense) return TOSS[i % TOSS.length];
+    const per = Math.ceil(n / 2), row = Math.floor(i / per), col = i % per, r = T.rng(i + 3);
+    return [8 + (col + (row ? 0.5 : 0)) * (84 / per), 41 + row * 31 + (r() - 0.5) * 5, (r() - 0.5) * 16];
+  };
+  function render(k, animate = true) {
+    page = k;
+    const pg = pages[k];
+    items = pg.items;
+    table.classList.toggle('is-dense', !!pg.dense);
+    table.innerHTML = items.map((it, i) => {
+      const [x, y, r] = spot(i, items.length, pg.dense);
+      return `<figure class="sc-print" data-i="${i}" style="left:${x}%;top:${y}%;--r:${r}deg;z-index:${i + 1}">
+        <img src="${it.img}" alt="${it.title}" draggable="false"><figcaption>${it.title}</figcaption></figure>`;
+    }).join('');
+    $('.wp-help', view).textContent = `${pg.note} · DRAG TO REARRANGE · CLICK TO LOOK CLOSER`;
+    view.querySelectorAll('.sc-pages button').forEach((b) => b.classList.toggle('is-on', +b.dataset.p === k));
+    prints = [...table.querySelectorAll('.sc-print')];
+    top = prints.length;
+    if (animate) gsap.from(prints, { y: () => innerHeight * 0.7, rotation: () => gsap.utils.random(-40, 40), opacity: 0, duration: 0.9, ease: 'power3.out', stagger: 0.05, delay: 0.1, clearProps: 'transform,opacity' });
+  }
+  render(0);
   gsap.from($('.wp-h', view), { x: 60, opacity: 0, duration: 0.8, ease: 'power3.out', delay: 0.1 });
+  const flip = (k) => {
+    if (k === page || k < 0 || k >= pages.length) return;
+    gsap.to(prints, { y: -innerHeight * 0.6, opacity: 0, rotation: () => gsap.utils.random(-30, 30), duration: 0.45, ease: 'power2.in', stagger: 0.02, onComplete: () => render(k) });
+  };
+  $('.sc-pages', view)?.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) flip(+b.dataset.p); });
 
   // drag to rearrange; a press without movement opens the print
   let drag = null;
@@ -131,8 +156,8 @@ function scatter(view, cat, idx) {
   const light = $('.sc-light', view);
   let cur = 0;
   function show(i) {
-    cur = (i + cat.items.length) % cat.items.length;
-    const it = cat.items[cur];
+    cur = (i + items.length) % items.length;
+    const it = items[cur];
     $('img', light).src = it.img;
     $('b', light).textContent = it.title;
     $('span', light).textContent = it.sub;
@@ -147,7 +172,8 @@ function scatter(view, cat, idx) {
     if (nav) show(cur + +nav.dataset.d);
     else hide();
   });
-  return { key: (d) => { if (!light.hidden) show(cur + d); }, escape: hide };
+  // arrows step through the open print, or flip pages when nothing is open
+  return { key: (d) => { if (!light.hidden) show(cur + d); else flip(page + d); }, escape: hide };
 }
 
 /* ---------- COURSES: a giant word with a booklet turning its pages ---------- */
