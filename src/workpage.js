@@ -60,7 +60,7 @@ function preloadImages() {
     ...FLUTTER.map(([f]) => `assets/flutter-${f}.jpg`),
     ...Array.from({ length: 8 }, (_, k) => `assets/aircanada-app-${k + 1}.jpg`),
     ...Array.from({ length: 6 }, (_, k) => `assets/pnc-app-${k + 1}.jpg`),
-    ...Array.from({ length: 14 }, (_, k) => `assets/dailytails-${pad(k + 1)}.jpg`),
+    ...['journal', 'record', 'chat', 'stats', 'guide', 'places'].map((id) => `assets/dailytails-${id}.jpg`),
   ];
   urls.forEach((u) => { const img = new Image(); img.decoding = 'async'; img.src = u; img.decode?.().catch(() => {}); });
 }
@@ -87,13 +87,14 @@ function scatter(view, cat, idx) {
     ${pages.length > 1 ? `<nav class="sc-pages">${pages.map((p, k) => `<button data-p="${k}">${pad(k + 1)} ${p.name}</button>`).join('')}</nav>` : ''}
     <div class="sc-light" hidden>
       <button class="sc-nav" data-d="-1" aria-label="Previous">←</button>
-      <figure><img alt=""><figcaption><b></b><span></span></figcaption></figure>
+      <figure><img alt=""><video autoplay muted loop playsinline hidden></video><figcaption><b></b><span></span></figcaption></figure>
       <button class="sc-nav" data-d="1" aria-label="Next">→</button>
     </div>`;
   const table = $('.sc-table', view);
   let prints = [], top = 0;
   // two loose rows for the dense page, the hand-placed toss otherwise
-  const spot = (i, n, dense) => {
+  const spot = (i, n, dense, spots) => {
+    if (spots) return spots[i % spots.length];
     if (!dense) return TOSS[i % TOSS.length];
     const per = Math.ceil(n / 2), row = Math.floor(i / per), col = i % per, r = T.rng(i + 3);
     return [8 + (col + (row ? 0.5 : 0)) * (84 / per), 41 + row * 31 + (r() - 0.5) * 5, (r() - 0.5) * 16];
@@ -104,9 +105,12 @@ function scatter(view, cat, idx) {
     items = pg.items;
     table.classList.toggle('is-dense', !!pg.dense);
     table.innerHTML = items.map((it, i) => {
-      const [x, y, r] = spot(i, items.length, pg.dense);
-      return `<figure class="sc-print" data-i="${i}" style="left:${x}%;top:${y}%;--r:${r}deg;z-index:${i + 1}">
-        <img src="${it.img}" alt="${it.title}" draggable="false"></figure>`;
+      const [x, y, r] = spot(i, items.length, pg.dense, pg.spots);
+      const media = it.video
+        ? `<video src="${it.video}" poster="${it.img}" aria-label="${it.title}" autoplay muted loop playsinline></video>`
+        : `<img src="${it.img}" alt="${it.title}" draggable="false">`;
+      return `<figure class="sc-print${it.video ? ' is-video' : ''}" data-i="${i}" style="left:${x}%;top:${y}%;--r:${r}deg;z-index:${i + 1}">
+        ${media}</figure>`;
     }).join('');
     $('.wp-help', view).textContent = `${pg.note} · DRAG TO REARRANGE · CLICK TO LOOK CLOSER`;
     $('.wp-sub', view).textContent = pg.sub ?? cat.sub;
@@ -159,7 +163,11 @@ function scatter(view, cat, idx) {
   function show(i) {
     cur = (i + items.length) % items.length;
     const it = items[cur];
-    $('img', light).src = it.img;
+    const img = $('img', light), vid = $('video', light);
+    img.hidden = !!it.video;
+    vid.hidden = !it.video;
+    if (it.video) { vid.poster = it.img; vid.src = it.video; vid.play().catch(() => {}); }
+    else { vid.removeAttribute('src'); vid.load(); img.src = it.img; }
     $('b', light).textContent = it.title;
     $('span', light).textContent = it.sub;
     if (light.hidden) {
@@ -167,7 +175,12 @@ function scatter(view, cat, idx) {
       gsap.fromTo($('figure', light), { scale: 0.85, opacity: 0, rotation: -4 }, { scale: 1, opacity: 1, rotation: 0, duration: 0.45, ease: 'back.out(1.6)' });
     }
   }
-  const hide = () => { if (light.hidden) return false; light.hidden = true; return true; };
+  const hide = () => {
+    if (light.hidden) return false;
+    light.hidden = true;
+    $('video', light).pause();
+    return true;
+  };
   light.addEventListener('click', (e) => {
     const nav = e.target.closest('.sc-nav');
     if (nav) show(cur + +nav.dataset.d);

@@ -741,7 +741,16 @@ const leanAt = new V3(); // centre of the hovered item
 const lean = { pos: new V3(), target: new V3() };
 const leanGoal = { pos: new V3(), target: new V3() };
 
+let workCoveredAt = 0;
 function frame() {
+  // A work page is opaque and covers the whole canvas: once its fade-in is done, stop drawing the
+  // locker underneath so the page's looping videos get the GPU to themselves.
+  if (ui.isWorkOpen()) {
+    workCoveredAt ||= performance.now();
+    if (performance.now() - workCoveredAt > 700) return;
+  } else {
+    workCoveredAt = 0;
+  }
   const t = clock.getElapsedTime();
   mouse.sx += (mouse.x - mouse.sx) * 0.06;
   mouse.sy += (mouse.y - mouse.sy) * 0.06;
