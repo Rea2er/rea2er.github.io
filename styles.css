@@ -133,7 +133,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .sc-table { position: absolute; inset: 70px 0 50px; }
 .sc-print { --tilt: 0deg; position: absolute; width: min(15.5vw, 25vh); translate: -50% -50%; rotate: calc(var(--r) + var(--tilt)); padding: 8px; background: #fff; border-radius: 6px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 24px 40px -20px rgba(20, 30, 50, 0.45); cursor: grab; touch-action: none; user-select: none; transition: rotate 0.35s var(--ease), scale 0.35s var(--ease), box-shadow 0.35s; }
 .sc-print img, .sc-print video { display: block; width: 100%; border-radius: 3px; pointer-events: none; }
-.sc-print.is-video { width: min(11vw, 23vh); }
+.sc-print.is-video { width: min(10vw, 19vh); }
+/* the poster holds the place; the recording fades in over it once it is actually playing */
+.sc-print.is-video video { position: absolute; inset: 8px; width: calc(100% - 16px); height: calc(100% - 16px); object-fit: cover; opacity: 0; transition: opacity 0.4s; }
+.sc-print.is-video.is-ready video { opacity: 1; }
+.sc-load { position: absolute; right: 16px; bottom: 16px; width: 18px; height: 18px; border: 2px solid rgba(40, 64, 232, 0.2); border-top-color: #2840e8; border-radius: 50%; animation: sc-spin 0.8s linear infinite; transition: opacity 0.3s; pointer-events: none; }
+.sc-print.is-ready .sc-load { opacity: 0; animation: none; }
+@keyframes sc-spin { to { rotate: 360deg; } }
 .sc-print:hover { scale: 1.06; rotate: calc(var(--r) * 0.3); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08), 0 40px 60px -24px rgba(20, 30, 50, 0.55); }
 .sc-print.is-held { cursor: grabbing; scale: 1.1; transition: scale 0.2s; }
 .sc-table.is-dense .sc-print { width: min(10.5vw, 21vh); padding: 6px; }
@@ -281,7 +287,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   .wp-h.is-right { top: 52px; right: 16px; }
   .sc-table { inset: 150px 0 60px; }
   .sc-print { width: 30vw; }
-  .sc-print.is-video { width: 14vw; }
+  .sc-pages { bottom: 92px; }
+  .sc-print.is-video { width: 12vw; }
   .mz-book { --pw: min(44vw, 34vh); }
   .yt-grid { inset: 60px 16px 40px; grid-template-columns: 1fr; align-content: start; gap: 18px; overflow-y: auto; }
   .yt-stats { margin: 14px 0; gap: 8px; }

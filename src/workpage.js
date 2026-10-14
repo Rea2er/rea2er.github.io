@@ -60,7 +60,7 @@ function preloadImages() {
     ...FLUTTER.map(([f]) => `assets/flutter-${f}.jpg`),
     ...Array.from({ length: 8 }, (_, k) => `assets/aircanada-app-${k + 1}.jpg`),
     ...Array.from({ length: 6 }, (_, k) => `assets/pnc-app-${k + 1}.jpg`),
-    ...['journal', 'record', 'chat', 'stats', 'guide', 'places', 'products', 'play', 'skins', 'checkin', 'draw', 'expenses', 'settings'].map((id) => `assets/dailytails-${id}.jpg`),
+    ...['welcome', 'pets', 'journal', 'record', 'chat', 'stats', 'guide', 'places', 'products', 'play', 'skins', 'checkin', 'draw', 'expenses', 'settings'].map((id) => `assets/dailytails-${id}.jpg`),
   ];
   urls.forEach((u) => { const img = new Image(); img.decoding = 'async'; img.src = u; img.decode?.().catch(() => {}); });
 }
@@ -99,17 +99,72 @@ function scatter(view, cat, idx) {
     const per = Math.ceil(n / 2), row = Math.floor(i / per), col = i % per, r = T.rng(i + 3);
     return [8 + (col + (row ? 0.5 : 0)) * (84 / per), 41 + row * 31 + (r() - 0.5) * 5, (r() - 0.5) * 16];
   };
+  // A grid page sizes its prints to the free table: the row count that gives the largest print wins, every
+  // print keeps a gap around it so none covers another, and only a small tilt is left from the toss.
+  const PRINT_RATIO = 890 / 450;              // a recording's height over its width
+  function gridSpots(n) {
+    const r = table.getBoundingClientRect();
+    const hr = $('.wp-h', view)?.getBoundingClientRect();
+    // the big heading takes the table's top-right corner: rows that reach up into it stop short of it
+    const head = hr ? { left: hr.left - r.left - 24, bottom: hr.bottom - r.top + 12 } : null;
+    const top = 12, bottom = innerWidth < 760 ? 110 : 78, side = r.width * 0.03;
+    const H = r.height - top - bottom;
+    const span = (y0) => [side, head && y0 < head.bottom ? Math.max(side, head.left) : r.width - side];
+    let best = null;
+    for (let rows = 1; rows <= 6; rows++) {
+      const rowH = H / rows;
+      const spans = Array.from({ length: rows }, (_, i) => span(top + rowH * i));
+      for (let w = Math.floor((rowH * 0.92 - 16) / PRINT_RATIO + 16); w > 40; w -= 2) {
+        // a print's footprint: its width, what a 3° tilt adds at the corners, and a gap
+        const foot = w + ((w - 16) * PRINT_RATIO + 16) * 0.11 + 14;
+        const caps = spans.map(([a, b]) => Math.floor((b - a) / foot));
+        if (caps.reduce((s, c) => s + c, 0) >= n) {
+          if (!best || w > best.w) best = { rows, rowH, spans, caps, w };
+          break;
+        }
+      }
+    }
+    // spread the prints over the rows in proportion to what each row holds
+    const { rows, rowH, spans, caps, w } = best, total = caps.reduce((s, c) => s + c, 0);
+    const counts = caps.map((c) => Math.floor((c * n) / total));
+    for (let left = n - counts.reduce((s, c) => s + c, 0), i = 0; left > 0; i = (i + 1) % rows) {
+      if (counts[i] < caps[i]) { counts[i]++; left--; }
+    }
+    const spots = [];
+    for (let row = 0, i = 0; row < rows; row++) {
+      const [a, b] = spans[row], step = (b - a) / counts[row];
+      for (let col = 0; col < counts[row]; col++, i++) {
+        const x = a + step * (col + 0.5);
+        const y = top + rowH * (row + 0.5) + (((i * 5) % 3) - 1) * 4;
+        spots.push([(x / r.width) * 100, (y / r.height) * 100, ((i * 37) % 7) - 3]);
+      }
+    }
+    return { spots, w };
+  }
+  function placeGrid() {
+    if (!pages[page].grid) return;
+    const { spots, w } = gridSpots(prints.length);
+    prints.forEach((el, i) => {
+      el.style.left = `${spots[i][0]}%`;
+      el.style.top = `${spots[i][1]}%`;
+      el.style.width = `${w}px`;
+    });
+  }
+  addEventListener('resize', placeGrid);
+
   function render(k, animate = true) {
     page = k;
     const pg = pages[k];
     items = pg.items;
     table.classList.toggle('is-dense', !!pg.dense);
+    const grid = pg.grid ? gridSpots(items.length) : null;
     table.innerHTML = items.map((it, i) => {
-      const [x, y, r] = spot(i, items.length, pg.dense, pg.spots);
+      const [x, y, r] = grid ? grid.spots[i] : spot(i, items.length, pg.dense, pg.spots);
       const media = it.video
-        ? `<video src="${it.video}" poster="${it.img}" aria-label="${it.title}" autoplay muted loop playsinline></video>`
+        ? `<img src="${it.img}" alt="" draggable="false"><video data-src="${it.video}" aria-label="${it.title}" preload="none" muted loop playsinline></video><i class="sc-load" aria-hidden="true"></i>`
         : `<img src="${it.img}" alt="${it.title}" draggable="false">`;
-      return `<figure class="sc-print${it.video ? ' is-video' : ''}" data-i="${i}" style="left:${x}%;top:${y}%;--r:${r}deg;z-index:${i + 1}">
+      const width = grid ? `width:${grid.w}px;` : '';
+      return `<figure class="sc-print${it.video ? ' is-video' : ''}" data-i="${i}" style="left:${x}%;top:${y}%;--r:${r}deg;z-index:${i + 1};${width}">
         ${media}</figure>`;
     }).join('');
     $('.wp-help', view).textContent = `${pg.note} · DRAG TO REARRANGE · CLICK TO LOOK CLOSER`;
@@ -117,7 +172,31 @@ function scatter(view, cat, idx) {
     view.querySelectorAll('.sc-pages button').forEach((b) => b.classList.toggle('is-on', +b.dataset.p === k));
     prints = [...table.querySelectorAll('.sc-print')];
     top = prints.length;
+    const landed = animate ? 0.1 + 0.9 + prints.length * 0.05 : 0;
     if (animate) gsap.from(prints, { y: () => innerHeight * 0.7, rotation: () => gsap.utils.random(-40, 40), opacity: 0, duration: 0.9, ease: 'power3.out', stagger: 0.05, delay: 0.1, clearProps: 'transform,opacity' });
+    startVideos(landed);
+  }
+
+  // Recordings start one at a time once the prints have landed: thirteen videos decoding together with
+  // the drop-in animation is what made the page stutter. Each print shows its poster and a small spinner
+  // until its video is playing; a newer render (page flip) cancels the queue.
+  let queue = 0;
+  function startVideos(after) {
+    const run = ++queue;
+    const vids = [...table.querySelectorAll('video[data-src]')];
+    const next = (i) => {
+      if (run !== queue || i >= vids.length) return;
+      const v = vids[i];
+      let moved = false;
+      const go = () => { if (!moved) { moved = true; setTimeout(() => next(i + 1), 220); } };
+      setTimeout(go, 2500);                   // a slow or paused video does not hold up the rest
+      v.addEventListener('playing', () => { v.parentElement.classList.add('is-ready'); go(); }, { once: true });
+      v.addEventListener('error', go, { once: true });
+      v.src = v.dataset.src;
+      v.removeAttribute('data-src');
+      v.play().catch(go);
+    };
+    setTimeout(() => next(0), after * 1000);
   }
   render(0);
   gsap.from($('.wp-h', view), { x: 60, opacity: 0, duration: 0.8, ease: 'power3.out', delay: 0.1 });
@@ -187,7 +266,7 @@ function scatter(view, cat, idx) {
     else hide();
   });
   // arrows step through the open print, or flip pages when nothing is open
-  return { key: (d) => { if (!light.hidden) show(cur + d); else flip(page + d); }, escape: hide };
+  return { key: (d) => { if (!light.hidden) show(cur + d); else flip(page + d); }, escape: hide, cleanup: () => removeEventListener('resize', placeGrid) };
 }
 
 /* ---------- COURSES: a giant word with a booklet turning its pages ---------- */
