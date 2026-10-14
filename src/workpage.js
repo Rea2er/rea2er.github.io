@@ -89,8 +89,17 @@ function scatter(view, cat, idx) {
       <button class="sc-nav" data-d="-1" aria-label="Previous">←</button>
       <figure><img alt=""><video autoplay muted loop playsinline hidden></video><figcaption><b></b><span></span></figcaption></figure>
       <button class="sc-nav" data-d="1" aria-label="Next">→</button>
+    </div>
+    <div class="sc-film" hidden>
+      <button class="sc-film-x" aria-label="Close">×</button>
+      <video controls muted playsinline preload="none"></video>
     </div>`;
   const table = $('.sc-table', view);
+  // a page with a film gets a play button under the heading; it opens the film over the table
+  const filmBtn = document.createElement('button');
+  filmBtn.className = 'wp-film';
+  filmBtn.hidden = true;
+  $('.wp-h', view).append(filmBtn);
   let prints = [], top = 0;
   // two loose rows for the dense page, the hand-placed toss otherwise
   const spot = (i, n, dense, spots) => {
@@ -157,6 +166,8 @@ function scatter(view, cat, idx) {
     const pg = pages[k];
     items = pg.items;
     table.classList.toggle('is-dense', !!pg.dense);
+    filmBtn.hidden = !pg.film;           // before the grid is measured: the button is part of the heading
+    if (pg.film) filmBtn.innerHTML = `<i aria-hidden="true"></i>${pg.film.label}<em>${pg.film.length}</em>`;
     const grid = pg.grid ? gridSpots(items.length) : null;
     table.innerHTML = items.map((it, i) => {
       const [x, y, r] = grid ? grid.spots[i] : spot(i, items.length, pg.dense, pg.spots);
@@ -265,8 +276,37 @@ function scatter(view, cat, idx) {
     if (nav) show(cur + +nav.dataset.d);
     else hide();
   });
+  // The film: the table's recordings pause while it plays, and pick up again when it closes. Its file
+  // only loads on the first open.
+  const film = $('.sc-film', view), filmVid = $('video', film);
+  let paused = [];
+  filmBtn.addEventListener('click', () => {
+    const f = pages[page].film;
+    if (!f) return;
+    paused = [...table.querySelectorAll('video')].filter((v) => !v.paused);
+    paused.forEach((v) => v.pause());
+    if (filmVid.dataset.src !== f.src) { filmVid.poster = f.poster; filmVid.src = f.src; filmVid.dataset.src = f.src; }
+    film.hidden = false;
+    gsap.fromTo(filmVid, { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: 'power3.out' });
+    filmVid.currentTime = 0;
+    filmVid.play().catch(() => {});
+  });
+  const closeFilm = () => {
+    if (film.hidden) return false;
+    film.hidden = true;
+    filmVid.pause();
+    paused.forEach((v) => v.play().catch(() => {}));
+    paused = [];
+    return true;
+  };
+  film.addEventListener('click', (e) => { if (e.target !== filmVid) closeFilm(); });
+
   // arrows step through the open print, or flip pages when nothing is open
-  return { key: (d) => { if (!light.hidden) show(cur + d); else flip(page + d); }, escape: hide, cleanup: () => removeEventListener('resize', placeGrid) };
+  return {
+    key: (d) => { if (!film.hidden) return; if (!light.hidden) show(cur + d); else flip(page + d); },
+    escape: () => closeFilm() || hide(),
+    cleanup: () => { removeEventListener('resize', placeGrid); filmVid.pause(); },
+  };
 }
 
 /* ---------- COURSES: a giant word with a booklet turning its pages ---------- */

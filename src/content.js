@@ -82,6 +82,8 @@ export const workCategories = [
       name: 'DailyTails',
       sub: 'My own iOS app',
       note: 'DailyTails, my own iOS pet journal. Recorded on my iPhone.',
+      // the promo film, opened from a button under the page's heading
+      film: { src: 'assets/dailytails-film.mp4', poster: 'assets/dailytails-film.jpg', label: 'Watch the film', length: '1:14' },
       items: [
         ['welcome', 'Splash & Welcome', 'The launch animation, then five looping previews of what the app does'],
         ['pets', 'Pet Management', 'Add a pet with its artwork and details, set the current one, share its care'],
