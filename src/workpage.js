@@ -60,7 +60,7 @@ function preloadImages() {
     ...FLUTTER.map(([f]) => `assets/flutter-${f}.jpg`),
     ...Array.from({ length: 8 }, (_, k) => `assets/aircanada-app-${k + 1}.jpg`),
     ...Array.from({ length: 6 }, (_, k) => `assets/pnc-app-${k + 1}.jpg`),
-    ...['journal', 'record', 'chat', 'stats', 'guide', 'places'].map((id) => `assets/dailytails-${id}.jpg`),
+    ...['journal', 'record', 'chat', 'stats', 'guide', 'places', 'products', 'play', 'skins', 'checkin'].map((id) => `assets/dailytails-${id}.jpg`),
   ];
   urls.forEach((u) => { const img = new Image(); img.decoding = 'async'; img.src = u; img.decode?.().catch(() => {}); });
 }

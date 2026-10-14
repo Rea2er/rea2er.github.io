@@ -83,7 +83,7 @@ export const workCategories = [
       sub: 'My own iOS app',
       note: 'DailyTails, my own iOS pet journal. Recorded on my iPhone.',
       // screen recordings from my iPhone, looping on the prints
-      spots: [[10, 54, -6], [26, 50, 3], [42, 56, -4], [58, 51, 5], [74, 55, -3], [90, 50, 4]],
+      spots: [[7, 54, -6], [16.6, 50, 3], [26.1, 56, -4], [35.7, 51, 5], [45.2, 55, -3], [54.8, 50, 4], [64.3, 55, -5], [73.9, 51, 3], [83.4, 55, -4], [93, 50, 5]],
       items: [
         ['journal', 'Mood Journal', 'Moods by month, each pet, every day in a list'],
         ['record', 'Daily Record', 'Log a day, then add a block of your own'],
@@ -91,6 +91,10 @@ export const workCategories = [
         ['stats', 'Stats & Patterns', 'A chart for every block, a year view, and patterns found in the logs'],
         ['guide', 'Beginner Guide', 'Explore, then guides for the first days: filters, topics and articles'],
         ['places', 'Places', 'Vets, pet stores and dog parks nearby: map, sheet, search'],
+        ['products', 'Products', 'Picks for each pet from a short quiz, plus supplies by use and search'],
+        ['play', 'Play Together', 'Small play ideas by mood, each with what you need and how to play'],
+        ['skins', 'Skin Shop & Dark Mode', 'Calendar backgrounds from the theme shop, in light and dark'],
+        ['checkin', 'Check-in & Badges', 'Perfect Month check-ins with gem repairs, and a badge for every month'],
       ].map(([id, title, sub]) => ({ video: `assets/dailytails-${id}.mp4`, img: `assets/dailytails-${id}.jpg`, title, sub: `DailyTails · ${sub}` })),
     }],
     items: [
