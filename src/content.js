@@ -69,6 +69,12 @@ export const skills = [
   },
 ];
 
+// One row of looping recordings across the scatter table: [left %, top %, rotation°] for 5 or 6 prints.
+const SPOTS = {
+  5: [[14, 54, -6], [32, 50, 3], [50, 56, -4], [68, 51, 5], [86, 55, -3]],
+  6: [[10, 54, -6], [26, 50, 3], [42, 56, -4], [58, 51, 5], [74, 55, -3], [90, 50, 4]],
+};
+
 // Each category opens its own page layout (see src/workpage.js):
 //   scatter  — prints tossed on a table (apps)        magazine — giant word with a turning page (courses)
 //   player   — channel + video player (youtube)       wall     — curved wall of tiles (projects)
@@ -77,26 +83,30 @@ export const workCategories = [
     id: 'apps', en: 'APPS', sub: 'Shipped iOS · used by millions', short: 'APPS', color: '#d4ff3a', ink: '#2840e8',
     layout: 'scatter',
     note: 'Public App Store screens of apps I built features for.',
-    // page 2 of the scatter table: my own app, real screens from my iPhone
-    pages: [{
-      name: 'DailyTails',
-      sub: 'My own iOS app',
-      note: 'DailyTails, my own iOS pet journal. Recorded on my iPhone.',
-      // screen recordings from my iPhone, looping on the prints
-      spots: [[7, 54, -6], [16.6, 50, 3], [26.1, 56, -4], [35.7, 51, 5], [45.2, 55, -3], [54.8, 50, 4], [64.3, 55, -5], [73.9, 51, 3], [83.4, 55, -4], [93, 50, 5]],
-      items: [
+    // pages 2 and 3 of the scatter table: my own app, screen recordings from my iPhone looping on the prints
+    pages: [
+      ['DailyTails', 'My own iOS app · the journal', [
         ['journal', 'Mood Journal', 'Moods by month, each pet, every day in a list'],
         ['record', 'Daily Record', 'Log a day, then add a block of your own'],
-        ['chat', 'AI Pet Chat', 'Care questions answered by Google Gemini, with an emergency check'],
         ['stats', 'Stats & Patterns', 'A chart for every block, a year view, and patterns found in the logs'],
+        ['chat', 'AI Pet Chat', 'Care questions answered by Google Gemini, with an emergency check'],
+        ['checkin', 'Check-in & Badges', 'Perfect Month check-ins with gem repairs, and a badge for every month'],
+        ['draw', 'Daily Draw', 'Shuffle the deck and turn over a small idea for today'],
+      ]],
+      ['DailyTails Explore', 'My own iOS app · explore', [
         ['guide', 'Beginner Guide', 'Explore, then guides for the first days: filters, topics and articles'],
         ['places', 'Places', 'Vets, pet stores and dog parks nearby: map, sheet, search'],
         ['products', 'Products', 'Picks for each pet from a short quiz, plus supplies by use and search'],
         ['play', 'Play Together', 'Small play ideas by mood, each with what you need and how to play'],
         ['skins', 'Skin Shop & Dark Mode', 'Calendar backgrounds from the theme shop, in light and dark'],
-        ['checkin', 'Check-in & Badges', 'Perfect Month check-ins with gem repairs, and a badge for every month'],
-      ].map(([id, title, sub]) => ({ video: `assets/dailytails-${id}.mp4`, img: `assets/dailytails-${id}.jpg`, title, sub: `DailyTails · ${sub}` })),
-    }],
+      ]],
+    ].map(([name, sub, list]) => ({
+      name,
+      sub,
+      note: 'DailyTails, my own iOS pet journal. Recorded on my iPhone.',
+      spots: SPOTS[list.length],
+      items: list.map(([id, title, more]) => ({ video: `assets/dailytails-${id}.mp4`, img: `assets/dailytails-${id}.jpg`, title, sub: `DailyTails · ${more}` })),
+    })),
     items: [
       { img: 'assets/aircanada-app-8.jpg', title: 'Travel Timeline', sub: 'Air Canada · the Day-of-Travel journey I owned' },
       { img: 'assets/aircanada-app-5.jpg', title: 'Mobile Boarding Pass', sub: 'Air Canada · PassKit & Apple Wallet' },
