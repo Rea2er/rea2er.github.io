@@ -92,7 +92,7 @@ function scatter(view, cat, idx) {
     </div>
     <div class="sc-film" hidden>
       <button class="sc-film-x" aria-label="Close">×</button>
-      <video controls muted playsinline preload="none"></video>
+      <video controls playsinline preload="none"></video>
     </div>`;
   const table = $('.sc-table', view);
   // a page with a film gets a play button under the heading; it opens the film over the table
@@ -289,7 +289,8 @@ function scatter(view, cat, idx) {
     film.hidden = false;
     gsap.fromTo(filmVid, { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: 'power3.out' });
     filmVid.currentTime = 0;
-    filmVid.play().catch(() => {});
+    // it has sound; a browser that still refuses sound starts it muted, with the unmute in its controls
+    filmVid.play().catch(() => { filmVid.muted = true; filmVid.play().catch(() => {}); });
   });
   const closeFilm = () => {
     if (film.hidden) return false;
