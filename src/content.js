@@ -69,10 +69,11 @@ export const skills = [
   },
 ];
 
-// One row of looping recordings across the scatter table: [left %, top %, rotation°] for 5 or 6 prints.
+// One row of looping recordings across the scatter table: [left %, top %, rotation°] for 5 to 7 prints.
 const SPOTS = {
   5: [[14, 54, -6], [32, 50, 3], [50, 56, -4], [68, 51, 5], [86, 55, -3]],
   6: [[10, 54, -6], [26, 50, 3], [42, 56, -4], [58, 51, 5], [74, 55, -3], [90, 50, 4]],
+  7: [[8, 54, -6], [22, 50, 3], [36, 56, -4], [50, 51, 5], [64, 55, -3], [78, 50, 4], [92, 55, -5]],
 };
 
 // Each category opens its own page layout (see src/workpage.js):
@@ -92,6 +93,7 @@ export const workCategories = [
         ['chat', 'AI Pet Chat', 'Care questions answered by Google Gemini, with an emergency check'],
         ['checkin', 'Check-in & Badges', 'Perfect Month check-ins with gem repairs, and a badge for every month'],
         ['draw', 'Daily Draw', 'Shuffle the deck and turn over a small idea for today'],
+        ['expenses', 'Expenses', 'Spending by month, year and pet, with history, filters and editing'],
       ]],
       ['DailyTails Explore', 'My own iOS app · explore', [
         ['guide', 'Beginner Guide', 'Explore, then guides for the first days: filters, topics and articles'],
@@ -99,6 +101,7 @@ export const workCategories = [
         ['products', 'Products', 'Picks for each pet from a short quiz, plus supplies by use and search'],
         ['play', 'Play Together', 'Small play ideas by mood, each with what you need and how to play'],
         ['skins', 'Skin Shop & Dark Mode', 'Calendar backgrounds from the theme shop, in light and dark'],
+        ['settings', 'Settings', 'Text size, message timing, notifications, FAQ, data export and week start'],
       ]],
     ].map(([name, sub, list]) => ({
       name,
